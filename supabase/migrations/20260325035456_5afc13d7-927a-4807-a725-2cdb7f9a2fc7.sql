@@ -1,0 +1,1 @@
+ALTER TABLE public.draft_media ADD COLUMN uploaded boolean NOT NULL DEFAULT true;

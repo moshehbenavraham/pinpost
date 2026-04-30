@@ -1,0 +1,1 @@
+DELETE FROM public.draft_media WHERE uploaded = false;
