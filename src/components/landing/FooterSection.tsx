@@ -2,7 +2,7 @@ import logoPinpost from "@/assets/logo-pinpost.png";
 
 export function FooterSection() {
   return (
-    <footer className="border-t border-border py-16">
+    <footer aria-label="Site footer" className="border-t border-border py-16">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-center text-center gap-4">
           <img src={logoPinpost} alt="PinPost" className="h-8 w-auto" />

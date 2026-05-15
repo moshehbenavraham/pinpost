@@ -8,8 +8,16 @@ import { Loader2, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import logoPinpost from "@/assets/logo-pinpost.png";
+import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/login")({
+  head: () =>
+    buildHead({
+      title: "Sign in",
+      description:
+        "Sign in to PinPost to preview your social posts across Instagram, LinkedIn, X, and Facebook before you publish.",
+      path: "/login",
+    }),
   component: LoginPage,
 });
 
@@ -90,10 +98,14 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <main
+      id="main"
+      tabIndex={-1}
+      className="flex min-h-screen items-center justify-center bg-background px-4 outline-none"
+    >
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center gap-2 mb-8">
-          <Link to="/"><img src={logoPinpost} alt="PinPost" className="h-10 w-auto" /></Link>
+          <Link to="/" aria-label="PinPost — back to home"><img src={logoPinpost} alt="PinPost" className="h-10 w-auto" /></Link>
           <p className="text-sm text-muted-foreground text-center">
             Sign in to preview your posts across every platform
           </p>
@@ -125,7 +137,7 @@ function LoginPage() {
             </div>
           </div>
 
-          <form onSubmit={handleEmailAuth} className="space-y-3">
+          <form onSubmit={handleEmailAuth} className="space-y-3" noValidate>
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs">Email</Label>
               <Input
@@ -135,6 +147,11 @@ function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
+                inputMode="email"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </div>
             <div className="space-y-1.5">
@@ -147,6 +164,7 @@ function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
               />
             </div>
             <Button type="submit" className="w-full gap-2" disabled={emailLoading}>
@@ -186,7 +204,9 @@ function LoginPage() {
           </p>
 
           {authError && (
-            <p className="text-sm text-destructive text-center">{authError}</p>
+            <p role="alert" aria-live="polite" className="text-sm text-destructive text-center">
+              {authError}
+            </p>
           )}
         </div>
 
@@ -194,6 +214,6 @@ function LoginPage() {
           By signing in, you agree to our terms of service and privacy policy.
         </p>
       </div>
-    </div>
+    </main>
   );
 }

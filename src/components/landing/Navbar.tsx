@@ -25,8 +25,9 @@ export function Navbar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none [&.scrolled]:opacity-100 [&.scrolled]:translate-y-0 [&.scrolled]:pointer-events-auto [&.scrolled]:border-b [&.scrolled]:border-border [&.scrolled]:bg-white [&.scrolled]:shadow-[0_1px_3px_0_rgb(0_0_0/0.04)]"
       ref={navRef}
+      aria-label="Primary"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none [&.scrolled]:opacity-100 [&.scrolled]:translate-y-0 [&.scrolled]:pointer-events-auto [&.scrolled]:border-b [&.scrolled]:border-border [&.scrolled]:bg-white [&.scrolled]:shadow-[0_1px_3px_0_rgb(0_0_0/0.04)]"
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <Link to="/" className="flex items-center text-foreground">
@@ -36,7 +37,6 @@ export function Navbar() {
         <div className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
           <a href="#features" className="transition-colors hover:text-foreground">Features</a>
           <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
-          <a href="#" className="transition-colors hover:text-foreground">Pricing</a>
         </div>
 
         <div className="flex items-center gap-3">

@@ -464,8 +464,8 @@ export function PostEditor() {
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-white px-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link to="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
+            <Link to="/dashboard" aria-label="Back to dashboard">
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
           <img src={logoPinpost} alt="PinPost" className="h-6 w-auto" />
@@ -474,19 +474,28 @@ export function PostEditor() {
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground hidden md:inline">{user?.email}</span>
           {hasActiveUploads && (
-            <span className="text-xs text-muted-foreground animate-pulse">Uploading media…</span>
+            <span role="status" aria-live="polite" className="text-xs text-muted-foreground animate-pulse">
+              Uploading media…
+            </span>
           )}
           <Button variant="outline" size="sm" onClick={saveDraft} disabled={saving}>
             {saving ? "Saving…" : "Save draft"}
           </Button>
-          
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={signOut}
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <main id="main" tabIndex={-1} className="flex flex-1 overflow-hidden outline-none">
         {/* Editor pane */}
         <div className="flex w-full flex-col border-r border-border bg-white md:w-[420px] shrink-0">
           <div className="border-b border-border px-4 py-3">
@@ -504,8 +513,10 @@ export function PostEditor() {
                 onChange={(e) => { handleProfileImage(e.target.files); e.target.value = ""; }}
               />
               <button
+                type="button"
                 onClick={() => profileImageRef.current?.click()}
                 className="h-10 w-10 shrink-0 rounded-full border border-border bg-muted flex items-center justify-center overflow-hidden transition-colors hover:border-primary/40 active:scale-95"
+                aria-label="Upload profile image"
                 title="Upload profile image"
               >
                 {profileImageUrl ? (
@@ -652,10 +663,13 @@ export function PostEditor() {
                       )}
 
                       <button
+                        type="button"
                         onClick={() => removeMedia(media.id)}
-                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100 active:scale-95"
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground/70 text-background opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 active:scale-95"
+                        aria-label="Remove media"
+                        title="Remove media"
                       >
-                        <XIcon className="h-3 w-3" />
+                        <XIcon className="h-3 w-3" aria-hidden="true" />
                       </button>
                       <div className="absolute bottom-1 left-1">
                         {media.type === "image" ? (
@@ -741,7 +755,7 @@ export function PostEditor() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /editor
+Disallow: /api/
+
+Sitemap: https://pinpost.app/sitemap.xml

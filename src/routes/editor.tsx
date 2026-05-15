@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
+import { buildHead } from "@/lib/seo";
 
 const editorSearchSchema = z.object({
   draft: fallback(z.string(), "").default(""),
@@ -12,6 +13,13 @@ const editorSearchSchema = z.object({
 
 export const Route = createFileRoute("/editor")({
   validateSearch: zodValidator(editorSearchSchema),
+  head: () =>
+    buildHead({
+      title: "Editor",
+      description: "Compose a post and preview it across every platform.",
+      path: "/editor",
+      noindex: true,
+    }),
   component: EditorPage,
 });
 

@@ -5,8 +5,16 @@ import { Plus, Trash2, LogOut, FileText, Clock, Sparkles, Image as ImageIcon, Pe
 import logoPinpost from "@/assets/logo-pinpost.png";
 import { Button } from "@/components/ui/button";
 import { FORMAT_PRESETS, type FormatKey } from "@/components/editor/formatPresets";
+import { buildHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/dashboard")({
+  head: () =>
+    buildHead({
+      title: "Dashboard",
+      description: "Manage your drafts and profile in PinPost.",
+      path: "/dashboard",
+      noindex: true,
+    }),
   component: DashboardPage,
 });
 
@@ -277,13 +285,20 @@ function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground hidden md:inline">{user.email}</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={signOut}
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-6 py-10 space-y-10">
+      <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-6 py-10 space-y-10 outline-none">
         {/* Welcome banner */}
         <section className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -445,9 +460,13 @@ function DashboardPage() {
         </section>
 
         {/* Profile card */}
-        <section id="profile-section" className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <section
+          id="profile-section"
+          aria-labelledby="profile-settings-heading"
+          className="rounded-xl border border-border bg-card p-6 shadow-sm"
+        >
           <div className="flex items-center gap-2 mb-5">
-            <h2 className="text-base font-semibold text-foreground">Profile settings</h2>
+            <h2 id="profile-settings-heading" className="text-base font-semibold text-foreground">Profile settings</h2>
             <span className="text-xs text-muted-foreground">· Shown in previews</span>
           </div>
           <div className="flex items-start gap-5">
@@ -459,14 +478,16 @@ function DashboardPage() {
               onChange={(e) => { handleAvatarUpload(e.target.files); e.target.value = ""; }}
             />
             <button
+              type="button"
               onClick={() => avatarInputRef.current?.click()}
               className="h-20 w-20 shrink-0 rounded-full border border-border bg-muted/40 flex items-center justify-center overflow-hidden transition-all hover:border-primary/40 hover:shadow-md active:scale-95"
+              aria-label="Upload profile image"
               title="Upload profile image"
             >
               {profile.avatar_url ? (
                 <img src={profile.avatar_url} alt="Profile" className="h-full w-full object-cover rounded-full" />
               ) : (
-                <ImageIcon className="h-5 w-5 text-muted-foreground/60" />
+                <ImageIcon className="h-5 w-5 text-muted-foreground/60" aria-hidden="true" />
               )}
             </button>
             <div className="flex-1 space-y-3">
@@ -497,7 +518,7 @@ function DashboardPage() {
             </div>
           </div>
         </section>
-      </div>
+      </main>
     </div>
   );
 }
