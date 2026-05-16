@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useRef } from "react";
 import logoPinpost from "@/assets/logo-pinpost.png";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Navbar() {
   const { user } = useAuth();
@@ -27,7 +28,7 @@ export function Navbar() {
     <nav
       ref={navRef}
       aria-label="Primary"
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none [&.scrolled]:opacity-100 [&.scrolled]:translate-y-0 [&.scrolled]:pointer-events-auto [&.scrolled]:border-b [&.scrolled]:border-border [&.scrolled]:bg-white [&.scrolled]:shadow-[0_1px_3px_0_rgb(0_0_0/0.04)]"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 opacity-0 -translate-y-2 pointer-events-none [&.scrolled]:opacity-100 [&.scrolled]:translate-y-0 [&.scrolled]:pointer-events-auto [&.scrolled]:border-b [&.scrolled]:border-border [&.scrolled]:bg-background/85 [&.scrolled]:backdrop-blur-md [&.scrolled]:shadow-[0_1px_3px_0_rgb(0_0_0/0.04)] dark:[&.scrolled]:bg-background/80"
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
         <Link to="/" className="flex items-center text-foreground">
@@ -39,14 +40,15 @@ export function Navbar() {
           <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle className="h-8 w-8" />
           {user ? (
             <Button size="sm" asChild>
               <Link to="/editor">Open editor</Link>
             </Button>
           ) : (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                 <Link to="/login">Log in</Link>
               </Button>
               <Button variant="outline" size="sm" asChild>

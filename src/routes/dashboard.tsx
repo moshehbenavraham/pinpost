@@ -2,8 +2,10 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Plus, Trash2, LogOut, FileText, Clock, Sparkles, Image as ImageIcon, PenLine, Eye, Video } from "lucide-react";
+import { toast } from "sonner";
 import logoPinpost from "@/assets/logo-pinpost.png";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { FORMAT_PRESETS, type FormatKey } from "@/components/editor/formatPresets";
 import { buildHead } from "@/lib/seo";
 
@@ -207,15 +209,18 @@ function DashboardPage() {
     setSaving(true);
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      await supabase.from("profiles").upsert({
+      const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         display_name: profile.display_name,
         handle: profile.handle,
         avatar_url: avatarPath,
         updated_at: new Date().toISOString(),
       });
+      if (error) throw error;
+      toast.success("Profile saved.");
     } catch (e) {
       console.error("Failed to save profile", e);
+      toast.error("Couldn't save profile. Try again.");
     } finally {
       setSaving(false);
     }
@@ -230,38 +235,54 @@ function DashboardPage() {
   const handleAvatarUpload = useCallback(async (files: FileList | null) => {
     if (!files?.[0] || !user) return;
     const file = files[0];
-    if (!file.type.startsWith("image/")) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please pick an image file for your avatar.");
+      return;
+    }
 
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       const ext = file.name.split(".").pop() || "jpg";
       const path = `${user.id}/avatar.${ext}`;
 
-      await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
 
       const storagePath = path;
       const signedUrl = await getSignedAvatarUrl(storagePath);
       setAvatarPath(storagePath);
       setProfile((p) => ({ ...p, avatar_url: signedUrl }));
 
-      await supabase.from("profiles").upsert({
+      const { error: updateError } = await supabase.from("profiles").upsert({
         id: user.id,
         avatar_url: storagePath,
         updated_at: new Date().toISOString(),
       });
+      if (updateError) throw updateError;
+      toast.success("Avatar updated.");
     } catch (e) {
       console.error("Failed to upload avatar", e);
+      toast.error("Couldn't upload your avatar. Try again.");
     }
   }, [user, getSignedAvatarUrl]);
 
-  const deleteDraft = useCallback(async (id: string) => {
+  const deleteDraft = useCallback(async (id: string, title: string) => {
+    const label = title?.trim() || "this draft";
+    if (typeof window !== "undefined" && !window.confirm(`Delete ${label}? This can't be undone.`)) {
+      return;
+    }
     try {
       const { supabase } = await import("@/integrations/supabase/client");
-      await supabase.from("drafts").delete().eq("id", id);
+      const { error } = await supabase.from("drafts").delete().eq("id", id);
+      if (error) throw error;
       setDrafts((prev) => prev.filter((d) => d.id !== id));
       setThumbnails((prev) => prev.filter((t) => t.draftId !== id));
+      toast.success("Draft deleted.");
     } catch (e) {
       console.error("Failed to delete draft", e);
+      toast.error("Couldn't delete that draft. Try again.");
     }
   }, []);
 
@@ -279,12 +300,13 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-white px-6">
+      <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-card px-6">
         <div className="flex items-center gap-2.5">
           <img src={logoPinpost} alt="PinPost" className="h-7 w-auto" />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <span className="text-xs text-muted-foreground hidden md:inline">{user.email}</span>
+          <ThemeToggle className="h-8 w-8" />
           <Button
             variant="ghost"
             size="icon"
@@ -382,7 +404,7 @@ function DashboardPage() {
               <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
                 Create your first post to see how it looks across all platforms before publishing.
               </p>
-              <Button size="sm" variant="outline" className="mt-4 gap-1.5 bg-white" asChild>
+              <Button size="sm" variant="outline" className="mt-4 gap-1.5" asChild>
                 <Link to="/editor">
                   <Plus className="h-3.5 w-3.5" />
                   Create your first post
@@ -394,65 +416,81 @@ function DashboardPage() {
               {drafts.map((draft) => {
                 const format = FORMAT_PRESETS[draft.format_key as FormatKey];
                 const thumb = getThumbnail(draft.id);
+                const draftLabel = draft.title || "Untitled draft";
                 return (
-                  <Link
+                  <article
                     key={draft.id}
-                    to="/editor"
-                    search={{ draft: draft.id }}
-                    className="group relative flex flex-col rounded-xl border border-border bg-card overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-primary/30 active:scale-[0.99]"
+                    className="group relative flex flex-col rounded-xl border border-border bg-card overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-primary/30 focus-within:border-primary/40 focus-within:shadow-md"
                   >
-                    {/* Thumbnail */}
-                    <div className="relative h-36 w-full bg-muted overflow-hidden shrink-0">
-                      {thumb ? (
-                        thumb.type === "video" ? (
-                          <VideoStill src={thumb.url} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    {/* Card link wraps the click target the user wants. Action
+                        buttons sit OUTSIDE this Link so they're independently
+                        focusable and don't double-navigate. */}
+                    <Link
+                      to="/editor"
+                      search={{ draft: draft.id }}
+                      aria-label={`Open ${draftLabel} in editor`}
+                      className="flex flex-1 flex-col rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    >
+                      {/* Thumbnail */}
+                      <div className="relative h-36 w-full bg-muted overflow-hidden shrink-0">
+                        {thumb ? (
+                          thumb.type === "video" ? (
+                            <VideoStill src={thumb.url} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                          ) : (
+                            <img
+                              src={thumb.url}
+                              alt={`Preview for ${draftLabel}`}
+                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          )
                         ) : (
-                          <img
-                            src={thumb.url}
-                            alt="Draft preview"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        )
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                        </div>
-                      )}
-                      {format && (
-                        <span className="absolute top-2 left-2 text-[10px] font-medium text-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded-md">
-                          {format.shortLabel}
-                        </span>
-                      )}
-                    </div>
+                          <div className="flex h-full w-full items-center justify-center">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground/40" aria-hidden="true" />
+                          </div>
+                        )}
+                        {format && (
+                          <span className="absolute top-2 left-2 text-[10px] font-medium text-foreground bg-background/80 backdrop-blur-sm px-2 py-0.5 rounded-md">
+                            {format.shortLabel}
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Content */}
-                    <div className="flex flex-1 flex-col justify-between p-3.5">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate leading-tight">
-                          {draft.title || "Untitled draft"}
-                        </p>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
-                          {draft.text?.slice(0, 120) || "Empty draft"}
-                        </p>
+                      {/* Content */}
+                      <div className="flex flex-1 flex-col justify-between p-3.5">
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-medium text-foreground truncate leading-tight">
+                            {draftLabel}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
+                            {draft.text?.slice(0, 120) || "Empty draft"}
+                          </p>
+                        </div>
+                        <div className="mt-2.5 flex items-center text-[10px] text-muted-foreground">
+                          <Clock className="h-2.5 w-2.5 mr-1" aria-hidden="true" />
+                          <time dateTime={draft.updated_at}>
+                            {new Date(draft.updated_at).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </time>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between mt-2.5">
-                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <Clock className="h-2.5 w-2.5" />
-                          {new Date(draft.updated_at).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <button
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteDraft(draft.id); }}
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive active:scale-95"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </Link>
+                    </Link>
+
+                    {/* Delete button: outside the Link, always visible on
+                        touch, hover-revealed on desktop, focus-revealed for
+                        keyboard users. */}
+                    <button
+                      type="button"
+                      onClick={() => deleteDraft(draft.id, draft.title)}
+                      aria-label={`Delete ${draftLabel}`}
+                      title="Delete draft"
+                      className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded-md bg-background/80 text-muted-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </article>
                 );
               })}
             </div>

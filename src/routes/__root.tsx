@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider, themeBootstrapScript } from "@/hooks/useTheme";
 import { Toaster } from "@/components/ui/sonner";
 import { buildHead, buildSiteJsonLd } from "@/lib/seo";
 
@@ -16,6 +17,11 @@ export const Route = createRootRoute({
         { rel: "icon", href: "/social-preview.svg", type: "image/svg+xml" },
       ],
       scripts: [
+        // Anti-FOUC: resolve light/dark before paint so dark-OS visitors don't
+        // see a light-mode flash on first render.
+        {
+          children: themeBootstrapScript,
+        },
         {
           type: "application/ld+json",
           children: buildSiteJsonLd(),
@@ -29,7 +35,9 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning is required because the bootstrap script
+    // mutates documentElement.classList / colorScheme before React hydrates.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -43,15 +51,17 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <AuthProvider>
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-foreground focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-background focus:shadow-lg focus:outline-none"
-      >
-        Skip to main content
-      </a>
-      <Outlet />
-      <Toaster />
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-foreground focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-background focus:shadow-lg focus:outline-none"
+        >
+          Skip to main content
+        </a>
+        <Outlet />
+        <Toaster />
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

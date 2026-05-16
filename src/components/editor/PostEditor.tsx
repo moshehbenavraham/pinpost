@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, ImagePlus, Video, LogOut, X as XIcon, FileImage, FileVideo, ChevronDown, AlertCircle, RotateCw } from "lucide-react";
+import { toast } from "sonner";
 import logoPinpost from "@/assets/logo-pinpost.png";
 import { Button } from "@/components/ui/button";
 import { PlatformPreview } from "./PlatformPreview";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { FORMAT_PRESETS, FORMAT_KEYS, type FormatKey } from "./formatPresets";
 import { EnhanceButton } from "./EnhanceButton";
 import { getRouteApi } from "@tanstack/react-router";
@@ -389,8 +391,10 @@ export function PostEditor() {
           }
         }
       }
+      toast.success("Draft saved.");
     } catch (e) {
       console.error("Failed to save draft", e);
+      toast.error("Couldn't save your draft. Try again.");
     } finally {
       setSaving(false);
     }
@@ -461,7 +465,7 @@ export function PostEditor() {
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* Top bar */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-white px-4">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-card px-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <Link to="/dashboard" aria-label="Back to dashboard">
@@ -482,6 +486,8 @@ export function PostEditor() {
             {saving ? "Saving…" : "Save draft"}
           </Button>
 
+          <ThemeToggle className="h-8 w-8" />
+
           <Button
             variant="ghost"
             size="icon"
@@ -497,7 +503,7 @@ export function PostEditor() {
 
       <main id="main" tabIndex={-1} className="flex flex-1 overflow-hidden outline-none">
         {/* Editor pane */}
-        <div className="flex w-full flex-col border-r border-border bg-white md:w-[420px] shrink-0">
+        <div className="flex w-full flex-col border-r border-border bg-card md:w-[420px] shrink-0">
           <div className="border-b border-border px-4 py-3">
             <h2 className="text-sm font-medium text-foreground">Compose</h2>
           </div>
